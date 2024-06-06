@@ -71,7 +71,7 @@ type Templatable = {
     footer?: string
 }
 type Editable = {
-  edit?: WAMessageKey
+    edit?: WAMessageKey
 }
 type Listable = {
     /** Sections of the List */
@@ -147,10 +147,10 @@ export type WASendableProduct = Omit<proto.Message.ProductMessage.IProductSnapsh
 
 export type AnyRegularMessageContent = (
     ({
-	    text: string
+        text: string
         linkPreview?: WAUrlInfo | null
     }
-    & Mentionable & Contextable & Buttonable & Templatable & Listable & Editable)
+        & Mentionable & Contextable & Buttonable & Templatable & Listable & Editable)
     | AnyMediaMessageContent
     | ({
         poll: PollMessageOptions
@@ -181,13 +181,13 @@ export type AnyRegularMessageContent = (
 ) & ViewOnce
 
 export type AnyMessageContent = AnyRegularMessageContent | {
-	forward: WAMessage
-	force?: boolean
+    forward: WAMessage
+    force?: boolean
 } | {
     /** Delete your message or anyone's message in a group (admin required) */
-	delete: WAMessageKey
+    delete: WAMessageKey
 } | {
-	disappearingMessagesInChat: boolean | number
+    disappearingMessagesInChat: boolean | number
 }
 
 export type GroupMetadataParticipants = Pick<GroupMetadata, 'participants'>
@@ -195,8 +195,8 @@ export type GroupMetadataParticipants = Pick<GroupMetadata, 'participants'>
 type MinimalRelayOptions = {
     /** override the message ID with a custom provided string */
     messageId?: string
-    /** cached group metadata, use to prevent redundant requests to WA & speed up msg sending */
-    cachedGroupMetadata?: (jid: string) => Promise<GroupMetadataParticipants | undefined>
+    /** should we use group metadata cache, or fetch afresh from the server; default assumed to be "true" */
+    useCachedGroupMetadata?: boolean
 }
 
 export type MessageRelayOptions = MinimalRelayOptions & {
@@ -213,9 +213,9 @@ export type MessageRelayOptions = MinimalRelayOptions & {
 
 export type MiscMessageGenerationOptions = MinimalRelayOptions & {
     /** optional, if you want to manually set the timestamp of the message */
-	timestamp?: Date
+    timestamp?: Date
     /** the message you want to quote */
-	quoted?: WAMessage
+    quoted?: WAMessage
     /** disappearing messages settings */
     ephemeralExpiration?: number | string
     /** timeout for media upload to WA server */
@@ -229,19 +229,19 @@ export type MiscMessageGenerationOptions = MinimalRelayOptions & {
     newsletter?: boolean
 }
 export type MessageGenerationOptionsFromContent = MiscMessageGenerationOptions & {
-	userJid: string
+    userJid: string
 }
 
 export type WAMediaUploadFunction = (readStream: Readable, opts: { fileEncSha256B64: string, mediaType: MediaType, timeoutMs?: number, newsletter?: boolean }) => Promise<{ mediaUrl: string, directPath: string, handle?: string }>
 
 export type MediaGenerationOptions = {
-	logger?: Logger
+    logger?: Logger
     mediaTypeOverride?: MediaType
     upload: WAMediaUploadFunction
     /** cache media so it does not have to be uploaded again */
     mediaCache?: CacheStore
 
-	newsletter?: boolean
+    newsletter?: boolean
 
     mediaUploadTimeoutMs?: number
 
@@ -252,7 +252,7 @@ export type MediaGenerationOptions = {
     font?: number
 }
 export type MessageContentGenerationOptions = MediaGenerationOptions & {
-	getUrlInfo?: (text: string) => Promise<WAUrlInfo | undefined>
+    getUrlInfo?: (text: string) => Promise<WAUrlInfo | undefined>
 }
 export type MessageGenerationOptions = MessageContentGenerationOptions & MessageGenerationOptionsFromContent
 
