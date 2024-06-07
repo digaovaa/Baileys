@@ -723,7 +723,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 
 	const handleNotification = async(node: BinaryNode) => {
 		const remoteJid = node.attrs.from
-		if(shouldIgnoreJid(remoteJid)) {
+		if(shouldIgnoreJid(remoteJid) && !['@s.whatsapp.net'].includes(remoteJid)) {
 			logger.debug({ remoteJid, id: node.attrs.id }, 'ignored notification')
 			await sendMessageAck(node)
 			return
@@ -755,12 +755,17 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 	}
 
 	const handleMessage = async(node: BinaryNode) => {
-		if(getBinaryNodeChild(node, 'unavailable') && !getBinaryNodeChild(node, 'enc')) {
-			// "missing message from node" fix
-			logger.debug(node, 'missing body; sending ack then ignoring.')
+		if(shouldIgnoreJid(node.attrs.from!) && node.attrs.from! !== '@s.whatsapp.net') {
+			logger.debug({ key: node.attrs.key }, 'ignored message')
 			await sendMessageAck(node)
 			return
 		}
+		// if(getBinaryNodeChild(node, 'unavailable') && !getBinaryNodeChild(node, 'enc')) {
+		// 	// "missing message from node" fix
+		// 	logger.debug(node, 'missing body; sending ack then ignoring.')
+		// 	await sendMessageAck(node)
+		// 	return
+		// }
 
 		const { fullMessage: msg, category, author, decrypt } = decryptMessageNode(
 			node,
@@ -776,11 +781,11 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 			}
 		}
 
-		if(shouldIgnoreJid(msg.key.remoteJid!)) {
-			logger.debug({ key: msg.key }, 'ignored message')
-			await sendMessageAck(node)
-			return
-		}
+		// if(shouldIgnoreJid(node.attrs.from!) && !['@s.whatsapp.net'].includes(node.attrs.from)) {
+		// 	logger.debug({ key: node.attrs.key }, 'ignored message')
+		// 	await sendMessageAck(node)
+		// 	return
+		// }
 
 		await Promise.all([
 			processingMutex.mutex(
