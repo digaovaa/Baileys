@@ -120,7 +120,7 @@ export type SocketConfig = {
     makeSignalRepository: (auth: SignalAuthState) => SignalRepository
 
     /** cached group metadata, use to prevent redundant requests to WA & speed up msg sending */
-    cachedGroupMetadata: (jid: string) => Promise<GroupMetadata | undefined>
+    // cachedGroupMetadata: (jid: string) => Promise<GroupMetadata | undefined>
 
     /** Socket passthrough */
     socket?: any

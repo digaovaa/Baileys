@@ -17,7 +17,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		generateHighQualityLinkPreview,
 		options: axiosOptions,
 		patchMessageBeforeSending,
-		cachedGroupMetadata,
+		// cachedGroupMetadata,
 	} = config
 	const sock = makeGroupsSocket(config)
 	const {
@@ -161,7 +161,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 			}
 		}
 
-		if(!users.length) {
+		if (!users.length) {
 			return deviceResults
 		}
 
@@ -307,7 +307,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 	const relayMessage = async (
 		jid: string,
 		message: proto.IMessage,
-		{ messageId: msgId, participant, additionalAttributes, useUserDevicesCache, useCachedGroupMetadata, statusJidList }: MessageRelayOptions
+		{ messageId: msgId, participant, additionalAttributes, useUserDevicesCache, cachedGroupMetadata, statusJidList }: MessageRelayOptions
 	) => {
 		const meId = authState.creds.me!.id
 
@@ -321,7 +321,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 
 		msgId = msgId || generateMessageIDV2(sock.user?.id)
 		useUserDevicesCache = useUserDevicesCache !== false
-		useCachedGroupMetadata = useCachedGroupMetadata !== false && !isStatus
+		// useCachedGroupMetadata = useCachedGroupMetadata !== false && !isStatus
 
 		const participants: BinaryNode[] = []
 		const destinationJid = (!isStatus) ? jidEncode(user, isLid ? 'lid' : isGroup ? 'g.us' : 's.whatsapp.net') : statusJid
@@ -353,10 +353,11 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 				if (isGroup || isStatus) {
 					const [groupData, senderKeyMap] = await Promise.all([
 						(async () => {
-							let groupData = useCachedGroupMetadata && cachedGroupMetadata ? await cachedGroupMetadata(jid) : undefined
-							if (groupData && Array.isArray(groupData?.participants)) {
+							let groupData = cachedGroupMetadata ? await cachedGroupMetadata(jid) : undefined
+							if (groupData) {
 								logger.trace({ jid, participants: groupData.participants.length }, 'using cached group metadata')
-							} else {
+							}
+							if (!groupData && !isStatus) {
 								groupData = await groupMetadata(jid)
 							}
 
@@ -766,7 +767,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 					additionalAttributes.edit = '1'
 				}
 
-				await relayMessage(jid, fullMsg.message!, { messageId: fullMsg.key.id!, useCachedGroupMetadata: options.useCachedGroupMetadata, additionalAttributes, statusJidList: options.statusJidList })
+				await relayMessage(jid, fullMsg.message!, { messageId: fullMsg.key.id!, cachedGroupMetadata: options.cachedGroupMetadata, additionalAttributes, statusJidList: options.statusJidList })
 				if (config.emitOwnEvents) {
 					process.nextTick(() => {
 						processingMutex.mutex(() => (
