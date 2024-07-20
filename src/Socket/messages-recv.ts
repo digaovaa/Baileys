@@ -68,6 +68,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 		uploadPreKeys,
 		createParticipantNodes,
 		getUSyncDevices,
+		sendPeerDataOperationMessage
 	} = sock
 
 	/** this mutex ensures that each retryRequest will wait for the previous one to finish */
