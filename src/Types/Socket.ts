@@ -7,7 +7,6 @@ import { proto } from '../../WAProto'
 import { AuthenticationState, SignalAuthState, TransactionCapabilityOptions } from './Auth'
 import { MediaConnInfo } from './Message'
 import { SignalRepository } from './Signal'
-import { GroupMetadata } from './GroupMetadata'
 
 export type WAVersion = [number, number, number]
 export type WABrowserDescription = [string, string, string]
@@ -32,8 +31,8 @@ export type SocketConfig = {
     defaultQueryTimeoutMs: number | undefined
     /** ping-pong interval for WS connection */
     keepAliveIntervalMs: number
-    /** should baileys use the mobile api instead of the multi device api */
-    mobile?: boolean
+	/** should baileys use the mobile api instead of the multi device api */
+	mobile?: boolean
     /** proxy agent */
     agent?: Agent
     /** pino logger */
@@ -118,9 +117,6 @@ export type SocketConfig = {
     getMessage: (key: proto.IMessageKey) => Promise<proto.IMessage | undefined>
 
     makeSignalRepository: (auth: SignalAuthState) => SignalRepository
-
-    /** cached group metadata, use to prevent redundant requests to WA & speed up msg sending */
-    // cachedGroupMetadata: (jid: string) => Promise<GroupMetadata | undefined>
 
     /** Socket passthrough */
     socket?: any

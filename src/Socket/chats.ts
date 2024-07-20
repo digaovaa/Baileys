@@ -37,13 +37,13 @@ export const makeChatsSocket = (config: SocketConfig) => {
 	const processingMutex = makeMutex()
 
 	/** helper function to fetch the given app state sync key */
-	const getAppStateSyncKey = async (keyId: string) => {
+	const getAppStateSyncKey = async(keyId: string) => {
 		const { [keyId]: key } = await authState.keys.get('app-state-sync-key', [keyId])
 		return key
 	}
 
-	const fetchPrivacySettings = async (force: boolean = false) => {
-		if (!privacySettings || force) {
+	const fetchPrivacySettings = async(force: boolean = false) => {
+		if(!privacySettings || force) {
 			const { content } = await query({
 				tag: 'iq',
 				attrs: {
@@ -62,7 +62,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 	}
 
 	/** helper function to run a privacy IQ query */
-	const privacyQuery = async (name: string, value: string) => {
+	const privacyQuery = async(name: string, value: string) => {
 		await query({
 			tag: 'iq',
 			attrs: {
@@ -83,31 +83,47 @@ export const makeChatsSocket = (config: SocketConfig) => {
 		})
 	}
 
-	const updateLastSeenPrivacy = async (value: WAPrivacyValue) => {
+	const updateLastSeenPrivacy = async(value: WAPrivacyValue) => {
 		await privacyQuery('last', value)
 	}
 
-	const updateOnlinePrivacy = async (value: WAPrivacyOnlineValue) => {
+	const updateOnlinePrivacy = async(value: WAPrivacyOnlineValue) => {
 		await privacyQuery('online', value)
 	}
 
-	const updateProfilePicturePrivacy = async (value: WAPrivacyValue) => {
+	const fetchDisappearingDuration = async(...jids: string[]) => {
+		const list = jids.map((jid) => ({ tag: 'user', attrs: { jid } }))
+		const results = await interactiveQuery(
+			list,
+			{ tag: 'disappearing_mode', attrs: {} }
+		)
+		return results.map(item => {
+			const result = getBinaryNodeChild(item, 'disappearing_mode')
+			return {
+				user: item.attrs.jid,
+				duration: parseInt((result as any)?.attrs.duration),
+				setAt: new Date(+(result?.attrs.t || 0) * 1000)
+			}
+		})
+	}
+
+	const updateProfilePicturePrivacy = async(value: WAPrivacyValue) => {
 		await privacyQuery('profile', value)
 	}
 
-	const updateStatusPrivacy = async (value: WAPrivacyValue) => {
+	const updateStatusPrivacy = async(value: WAPrivacyValue) => {
 		await privacyQuery('status', value)
 	}
 
-	const updateReadReceiptsPrivacy = async (value: WAReadReceiptsValue) => {
+	const updateReadReceiptsPrivacy = async(value: WAReadReceiptsValue) => {
 		await privacyQuery('readreceipts', value)
 	}
 
-	const updateGroupsAddPrivacy = async (value: WAPrivacyValue) => {
+	const updateGroupsAddPrivacy = async(value: WAPrivacyValue) => {
 		await privacyQuery('groupadd', value)
 	}
 
-	const updateDefaultDisappearingMode = async (duration: number) => {
+	const updateDefaultDisappearingMode = async(duration: number) => {
 		await query({
 			tag: 'iq',
 			attrs: {
@@ -125,7 +141,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 	}
 
 	/** helper function to run a generic IQ query */
-	const interactiveQuery = async (userNodes: BinaryNode[], queryNode: BinaryNode) => {
+	const interactiveQuery = async(userNodes: BinaryNode[], queryNode: BinaryNode) => {
 		const result = await query({
 			tag: 'iq',
 			attrs: {
@@ -166,7 +182,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 		return users
 	}
 
-	const onWhatsApp = async (...jids: string[]) => {
+	const onWhatsApp = async(...jids: string[]) => {
 		const query = { tag: 'contact', attrs: {} }
 		const list = jids.map((jid) => {
 			// insures only 1 + is there
@@ -190,12 +206,12 @@ export const makeChatsSocket = (config: SocketConfig) => {
 		}).filter(item => item.exists)
 	}
 
-	const fetchStatus = async (jid: string) => {
+	const fetchStatus = async(jid: string) => {
 		const [result] = await interactiveQuery(
 			[{ tag: 'user', attrs: { jid } }],
 			{ tag: 'status', attrs: {} }
 		)
-		if (result) {
+		if(result) {
 			const status = getBinaryNodeChild(result, 'status')
 			return {
 				status: status?.content!.toString(),
@@ -205,7 +221,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 	}
 
 	/** update the profile picture for yourself or a group */
-	const updateProfilePicture = async (jid: string, content: WAMediaUpload) => {
+	const updateProfilePicture = async(jid: string, content: WAMediaUpload) => {
 		const { img } = await generateProfilePicture(content)
 		await query({
 			tag: 'iq',
@@ -225,7 +241,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 	}
 
 	/** remove the profile picture for yourself or a group */
-	const removeProfilePicture = async (jid: string) => {
+	const removeProfilePicture = async(jid: string) => {
 		await query({
 			tag: 'iq',
 			attrs: {
@@ -237,7 +253,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 	}
 
 	/** update the profile status for yourself */
-	const updateProfileStatus = async (status: string) => {
+	const updateProfileStatus = async(status: string) => {
 		await query({
 			tag: 'iq',
 			attrs: {
@@ -255,11 +271,11 @@ export const makeChatsSocket = (config: SocketConfig) => {
 		})
 	}
 
-	const updateProfileName = async (name: string) => {
+	const updateProfileName = async(name: string) => {
 		await chatModify({ pushNameSetting: name }, '')
 	}
 
-	const fetchBlocklist = async () => {
+	const fetchBlocklist = async() => {
 		const result = await query({
 			tag: 'iq',
 			attrs: {
@@ -274,7 +290,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 			.map(n => n.attrs.jid)
 	}
 
-	const updateBlockStatus = async (jid: string, action: 'block' | 'unblock') => {
+	const updateBlockStatus = async(jid: string, action: 'block' | 'unblock') => {
 		await query({
 			tag: 'iq',
 			attrs: {
@@ -294,7 +310,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 		})
 	}
 
-	const getBusinessProfile = async (jid: string): Promise<WABusinessProfile | void> => {
+	const getBusinessProfile = async(jid: string): Promise<WABusinessProfile | void> => {
 		const results = await query({
 			tag: 'iq',
 			attrs: {
@@ -314,7 +330,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 
 		const profileNode = getBinaryNodeChild(results, 'business_profile')
 		const profiles = getBinaryNodeChild(profileNode, 'profile')
-		if (profiles) {
+		if(profiles) {
 			const address = getBinaryNodeChild(profiles, 'address')
 			const description = getBinaryNodeChild(profiles, 'description')
 			const website = getBinaryNodeChild(profiles, 'website')
@@ -340,7 +356,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 		}
 	}
 
-	const cleanDirtyBits = async (type: 'account_sync' | 'groups', fromTimestamp?: number | string) => {
+	const cleanDirtyBits = async(type: 'account_sync' | 'groups', fromTimestamp?: number | string) => {
 		logger.info({ fromTimestamp }, 'clean dirty bits ' + type)
 		await sendNode({
 			tag: 'iq',
@@ -376,30 +392,30 @@ export const makeChatsSocket = (config: SocketConfig) => {
 		}
 	}
 
-	const resyncAppState = ev.createBufferedFunction(async (collections: readonly WAPatchName[], isInitialSync: boolean) => {
+	const resyncAppState = ev.createBufferedFunction(async(collections: readonly WAPatchName[], isInitialSync: boolean) => {
 		// we use this to determine which events to fire
 		// otherwise when we resync from scratch -- all notifications will fire
 		const initialVersionMap: { [T in WAPatchName]?: number } = {}
 		const globalMutationMap: ChatMutationMap = {}
 
 		await authState.keys.transaction(
-			async () => {
+			async() => {
 				const collectionsToHandle = new Set<string>(collections)
 				// in case something goes wrong -- ensure we don't enter a loop that cannot be exited from
 				const attemptsMap: { [T in WAPatchName]?: number } = {}
 				// keep executing till all collections are done
 				// sometimes a single patch request will not return all the patches (God knows why)
 				// so we fetch till they're all done (this is determined by the "has_more_patches" flag)
-				while (collectionsToHandle.size) {
+				while(collectionsToHandle.size) {
 					const states = {} as { [T in WAPatchName]: LTHashState }
 					const nodes: BinaryNode[] = []
 
-					for (const name of collectionsToHandle) {
+					for(const name of collectionsToHandle) {
 						const result = await authState.keys.get('app-state-sync-version', [name])
 						let state = result[name]
 
-						if (state) {
-							if (typeof initialVersionMap[name] === 'undefined') {
+						if(state) {
+							if(typeof initialVersionMap[name] === 'undefined') {
 								initialVersionMap[name] = state.version
 							}
 						} else {
@@ -439,11 +455,11 @@ export const makeChatsSocket = (config: SocketConfig) => {
 
 					// extract from binary node
 					const decoded = await extractSyncdPatches(result, config?.options)
-					for (const key in decoded) {
+					for(const key in decoded) {
 						const name = key as WAPatchName
 						const { patches, hasMorePatches, snapshot } = decoded[name]
 						try {
-							if (snapshot) {
+							if(snapshot) {
 								const { state: newState, mutationMap } = await decodeSyncdSnapshot(
 									name,
 									snapshot,
@@ -460,7 +476,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 							}
 
 							// only process if there are syncd patches
-							if (patches.length) {
+							if(patches.length) {
 								const { state: newState, mutationMap } = await decodePatches(
 									name,
 									patches,
@@ -480,12 +496,12 @@ export const makeChatsSocket = (config: SocketConfig) => {
 								Object.assign(globalMutationMap, mutationMap)
 							}
 
-							if (hasMorePatches) {
+							if(hasMorePatches) {
 								logger.info(`${name} has more patches...`)
 							} else { // collection is done with sync
 								collectionsToHandle.delete(name)
 							}
-						} catch (error) {
+						} catch(error) {
 							// if retry attempts overshoot
 							// or key not found
 							const isIrrecoverableError = attemptsMap[name]! >= MAX_SYNC_ATTEMPTS
@@ -499,7 +515,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 							// increment number of retries
 							attemptsMap[name] = (attemptsMap[name] || 0) + 1
 
-							if (isIrrecoverableError) {
+							if(isIrrecoverableError) {
 								// stop retrying
 								collectionsToHandle.delete(name)
 							}
@@ -510,7 +526,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 		)
 
 		const { onMutation } = newAppStateChunkHandler(isInitialSync)
-		for (const key in globalMutationMap) {
+		for(const key in globalMutationMap) {
 			onMutation(globalMutationMap[key])
 		}
 	})
@@ -520,12 +536,13 @@ export const makeChatsSocket = (config: SocketConfig) => {
 	 * type = "preview" for a low res picture
 	 * type = "image for the high res picture"
 	 */
-	const profilePictureUrl = async (jid: string, type: 'preview' | 'image' = 'preview', timeoutMs?: number) => {
+	const profilePictureUrl = async(jid: string, type: 'preview' | 'image' = 'preview', timeoutMs?: number) => {
 		jid = jidNormalizedUser(jid)
 		const result = await query({
 			tag: 'iq',
 			attrs: {
-				to: jid,
+				target: jid,
+				to: S_WHATSAPP_NET,
 				type: 'get',
 				xmlns: 'w:profile:picture'
 			},
@@ -537,10 +554,10 @@ export const makeChatsSocket = (config: SocketConfig) => {
 		return child?.attrs?.url
 	}
 
-	const sendPresenceUpdate = async (type: WAPresence, toJid?: string) => {
+	const sendPresenceUpdate = async(type: WAPresence, toJid?: string) => {
 		const me = authState.creds.me!
-		if (type === 'available' || type === 'unavailable') {
-			if (!me!.name) {
+		if(type === 'available' || type === 'unavailable') {
+			if(!me!.name) {
 				logger.warn('no name present, ignoring presence update request...')
 				return
 			}
@@ -600,23 +617,23 @@ export const makeChatsSocket = (config: SocketConfig) => {
 		const jid = attrs.from
 		const participant = attrs.participant || attrs.from
 
-		if (shouldIgnoreJid(jid) && jid !== '@s.whatsapp.net') {
+		if(shouldIgnoreJid(jid)) {
 			return
 		}
 
-		if (tag === 'presence') {
+		if(tag === 'presence') {
 			presence = {
 				lastKnownPresence: attrs.type === 'unavailable' ? 'unavailable' : 'available',
 				lastSeen: attrs.last && attrs.last !== 'deny' ? +attrs.last : undefined
 			}
-		} else if (Array.isArray(content)) {
+		} else if(Array.isArray(content)) {
 			const [firstChild] = content
 			let type = firstChild.tag as WAPresence
-			if (type === 'paused') {
+			if(type === 'paused') {
 				type = 'available'
 			}
 
-			if (firstChild.attrs?.media === 'audio') {
+			if(firstChild.attrs?.media === 'audio') {
 				type = 'recording'
 			}
 
@@ -625,15 +642,15 @@ export const makeChatsSocket = (config: SocketConfig) => {
 			logger.error({ tag, attrs, content }, 'recv invalid presence node')
 		}
 
-		if (presence) {
+		if(presence) {
 			ev.emit('presence.update', { id: jid, presences: { [participant]: presence } })
 		}
 	}
 
-	const appPatch = async (patchCreate: WAPatchCreate) => {
+	const appPatch = async(patchCreate: WAPatchCreate) => {
 		const name = patchCreate.type
 		const myAppStateKeyId = authState.creds.myAppStateKeyId
-		if (!myAppStateKeyId) {
+		if(!myAppStateKeyId) {
 			throw new Boom('App state key not present!', { statusCode: 400 })
 		}
 
@@ -641,9 +658,9 @@ export const makeChatsSocket = (config: SocketConfig) => {
 		let encodeResult: { patch: proto.ISyncdPatch, state: LTHashState }
 
 		await processingMutex.mutex(
-			async () => {
+			async() => {
 				await authState.keys.transaction(
-					async () => {
+					async() => {
 						logger.debug({ patch: patchCreate }, 'applying app patch')
 
 						await resyncAppState([name], false)
@@ -698,7 +715,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 			}
 		)
 
-		if (config.emitOwnEvents) {
+		if(config.emitOwnEvents) {
 			const { onMutation } = newAppStateChunkHandler(false)
 			const { mutationMap } = await decodePatches(
 				name,
@@ -709,40 +726,40 @@ export const makeChatsSocket = (config: SocketConfig) => {
 				undefined,
 				logger,
 			)
-			for (const key in mutationMap) {
+			for(const key in mutationMap) {
 				onMutation(mutationMap[key])
 			}
 		}
 	}
 
-	// /** sending abt props may fix QR scan fail if server expects */
-	// const fetchAbt = async() => {
-	// 	const abtNode = await query({
-	// 		tag: 'iq',
-	// 		attrs: {
-	// 			to: S_WHATSAPP_NET,
-	// 			xmlns: 'abt',
-	// 			type: 'get',
-	// 		},
-	// 		content: [
-	// 			{ tag: 'props', attrs: { protocol: '1' } }
-	// 		]
-	// 	})
+	/** sending abt props may fix QR scan fail if server expects */
+	const fetchAbt = async() => {
+		const abtNode = await query({
+			tag: 'iq',
+			attrs: {
+				to: S_WHATSAPP_NET,
+				xmlns: 'abt',
+				type: 'get',
+			},
+			content: [
+				{ tag: 'props', attrs: { protocol: '1' } }
+			]
+		})
 
-	// 	const propsNode = getBinaryNodeChild(abtNode, 'props')
+		const propsNode = getBinaryNodeChild(abtNode, 'props')
 
-	// 	let props: { [_: string]: string } = {}
-	// 	if(propsNode) {
-	// 		props = reduceBinaryNodeToDictionary(propsNode, 'prop')
-	// 	}
+		let props: { [_: string]: string } = {}
+		if(propsNode) {
+			props = reduceBinaryNodeToDictionary(propsNode, 'prop')
+		}
 
-	// 	logger.debug('fetched abt')
+		logger.debug('fetched abt')
 
-	// 	return props
-	// }
+		return props
+	}
 
 	/** sending non-abt props may fix QR scan fail if server expects */
-	const fetchProps = async () => {
+	const fetchProps = async() => {
 		const resultNode = await query({
 			tag: 'iq',
 			attrs: {
@@ -751,21 +768,14 @@ export const makeChatsSocket = (config: SocketConfig) => {
 				type: 'get',
 			},
 			content: [
-				{
-					tag: 'props', attrs: {
-						protocol: '2',
-						hash: authState?.creds?.lastPropHash || ""
-					}
-				}
+				{ tag: 'props', attrs: {} }
 			]
 		})
 
 		const propsNode = getBinaryNodeChild(resultNode, 'props')
 
 		let props: { [_: string]: string } = {}
-		if (propsNode) {
-			authState.creds.lastPropHash = propsNode?.attrs?.hash
-			ev.emit('creds.update', authState.creds)
+		if(propsNode) {
 			props = reduceBinaryNodeToDictionary(propsNode, 'prop')
 		}
 
@@ -846,27 +856,28 @@ export const makeChatsSocket = (config: SocketConfig) => {
 	 * queries need to be fired on connection open
 	 * help ensure parity with WA Web
 	 * */
-	const executeInitQueries = async () => {
+	const executeInitQueries = async() => {
 		await Promise.all([
+			fetchAbt(),
 			fetchProps(),
 			fetchBlocklist(),
 			fetchPrivacySettings(),
 		])
 	}
 
-	const upsertMessage = ev.createBufferedFunction(async (msg: WAMessage, type: MessageUpsertType) => {
+	const upsertMessage = ev.createBufferedFunction(async(msg: WAMessage, type: MessageUpsertType) => {
 		ev.emit('messages.upsert', { messages: [msg], type })
 
-		if (!!msg.pushName) {
+		if(!!msg.pushName) {
 			let jid = msg.key.fromMe ? authState.creds.me!.id : (msg.key.participant || msg.key.remoteJid)
 			jid = jidNormalizedUser(jid!)
 
-			if (!msg.key.fromMe) {
+			if(!msg.key.fromMe) {
 				ev.emit('contacts.update', [{ id: jid, notify: msg.pushName, verifiedName: msg.verifiedBizName! }])
 			}
 
 			// update our pushname too
-			if (msg.key.fromMe && msg.pushName && authState.creds.me?.name !== msg.pushName) {
+			if(msg.key.fromMe && msg.pushName && authState.creds.me?.name !== msg.pushName) {
 				ev.emit('creds.update', { me: { ...authState.creds.me!, name: msg.pushName! } })
 			}
 		}
@@ -879,14 +890,14 @@ export const makeChatsSocket = (config: SocketConfig) => {
 			)
 			: false
 
-		if (historyMsg && !authState.creds.myAppStateKeyId) {
+		if(historyMsg && !authState.creds.myAppStateKeyId) {
 			logger.warn('skipping app state sync, as myAppStateKeyId is not set')
 			pendingAppStateSync = true
 		}
 
 		await Promise.all([
-			(async () => {
-				if (
+			(async() => {
+				if(
 					historyMsg
 					&& authState.creds.myAppStateKeyId
 				) {
@@ -908,7 +919,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 			)
 		])
 
-		if (
+		if(
 			msg.message?.protocolMessage?.appStateSyncKeyShare
 			&& pendingAppStateSync
 		) {
@@ -917,14 +928,14 @@ export const makeChatsSocket = (config: SocketConfig) => {
 		}
 
 		async function doAppStateSync() {
-			if (!authState.creds.accountSyncCounter) {
+			if(!authState.creds.accountSyncCounter) {
 				logger.info('doing initial app state sync')
 				await resyncAppState(ALL_WA_PATCH_NAMES, true)
 
 				const accountSyncCounter = (authState.creds.accountSyncCounter || 0) + 1
 				ev.emit('creds.update', { accountSyncCounter })
 
-				if (needToFlushWithAppStateSync) {
+				if(needToFlushWithAppStateSync) {
 					logger.debug('flushing with app state sync')
 					ev.flush()
 				}
@@ -935,34 +946,34 @@ export const makeChatsSocket = (config: SocketConfig) => {
 	ws.on('CB:presence', handlePresenceUpdate)
 	ws.on('CB:chatstate', handlePresenceUpdate)
 
-	ws.on('CB:ib,,dirty', async (node: BinaryNode) => {
+	ws.on('CB:ib,,dirty', async(node: BinaryNode) => {
 		const { attrs } = getBinaryNodeChild(node, 'dirty')!
 		const type = attrs.type
 		switch (type) {
-			case 'account_sync':
-				if (attrs.timestamp) {
-					let { lastAccountSyncTimestamp } = authState.creds
-					if (lastAccountSyncTimestamp) {
-						await cleanDirtyBits('account_sync', lastAccountSyncTimestamp)
-					}
-
-					lastAccountSyncTimestamp = +attrs.timestamp
-					ev.emit('creds.update', { lastAccountSyncTimestamp })
+		case 'account_sync':
+			if(attrs.timestamp) {
+				let { lastAccountSyncTimestamp } = authState.creds
+				if(lastAccountSyncTimestamp) {
+					await cleanDirtyBits('account_sync', lastAccountSyncTimestamp)
 				}
 
-				break
-			case 'groups':
-				// handled in groups.ts
-				break
-			default:
-				logger.info({ node }, 'received unknown sync')
-				break
+				lastAccountSyncTimestamp = +attrs.timestamp
+				ev.emit('creds.update', { lastAccountSyncTimestamp })
+			}
+
+			break
+		case 'groups':
+			// handled in groups.ts
+			break
+		default:
+			logger.info({ node }, 'received unknown sync')
+			break
 		}
 	})
 
 	ev.on('connection.update', ({ connection, receivedPendingNotifications }) => {
-		if (connection === 'open') {
-			if (fireInitQueries) {
+		if(connection === 'open') {
+			if(fireInitQueries) {
 				executeInitQueries()
 					.catch(
 						error => onUnexpectedError(error, 'init queries')
@@ -975,11 +986,11 @@ export const makeChatsSocket = (config: SocketConfig) => {
 				)
 		}
 
-		if (receivedPendingNotifications) {
+		if(receivedPendingNotifications) {
 			// if we don't have the app state key
 			// we keep buffering events until we finally have
 			// the key and can sync the messages
-			if (!authState.creds?.myAppStateKeyId && !config.mobile) {
+			if(!authState.creds?.myAppStateKeyId && !config.mobile) {
 				ev.buffer()
 				needToFlushWithAppStateSync = true
 			}
@@ -999,6 +1010,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 		fetchBlocklist,
 		fetchStatus,
 		updateProfilePicture,
+		fetchDisappearingDuration,
 		removeProfilePicture,
 		updateProfileStatus,
 		updateProfileName,
