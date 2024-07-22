@@ -217,5 +217,6 @@ export const initAuthCreds = (): AuthenticationCreds => {
 		registration: {} as never,
 		pairingCode: undefined,
 		routingInfo: undefined,
+		lastPropHash: undefined,
 	}
 }
